@@ -4,48 +4,55 @@ import psycopg2
 
 app = Flask(__name__)
 
+# ... código inicial ...
+
 @app.route('/')
 def index():
-    # Leer la URL de la base de datos desde la variable de entorno de Render
     DATABASE_URL = os.environ.get('DATABASE_URL')
     
-    if not DATABASE_URL:
-        return "ERROR: La variable DATABASE_URL no está configurada.", 500
-    
-    conn = None
-    resultado = "ERROR: No se pudo establecer la conexión." # Valor por defecto en caso de fallo
+    # ... manejo de errores ...
     
     try:
-        # Intenta conectar a Supabase usando la URL
         conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor()
         
-        # SI LA CONEXIÓN ES EXITOSA, CAMBIA EL MENSAJE
-        resultado = "¡CONEXIÓN A SUPABASE EXITOSA! 🎉 (El servidor está vivo)."
+        # Consulta para OBTENER los datos que insertaste
+        cursor.execute("SELECT nombre, turno FROM trabajador WHERE id_trabajador = 1")
+        trabajador = cursor.fetchone() # recupera la primera fila de la consulta
         
-        # --- CONSULTAS ELIMINADAS ---
-        # cursor = conn.cursor()
-        # cursor.execute("SELECT 1") 
-        # cursor.fetchone() 
-        # --- FIN DE CONSULTAS ---
+        if trabajador:
+            # Asigna una tupla de datos a la variable 'resultado'
+            resultado = (trabajador[0], trabajador[1]) # ej: ('Andrea Gomez', 'Matutino')
+        else:
+            resultado = ("No se encontraron datos", "Asegúrate de que el id_trabajador=1 exista.")
 
     except Exception as e:
-        # Esto capturará cualquier error de credenciales o de red
-        resultado = f"ERROR DE CONEXIÓN CRÍTICO: Revisa tu DATABASE_URL. Detalle: {e}"
+        resultado = (f"Error al conectar o consultar la BD: {e}", "Revisa tus tablas.")
         
     finally:
         if conn:
-            conn.close() # Cierra la conexión de forma segura
+            conn.close()
+
+    # Pasa la variable 'resultado' que contiene los datos a la plantilla HTML
+    # ...
 
     # Muestra el resultado en una página simple
+   # Muestra el resultado en una página simple
     html_content = f"""
     <!DOCTYPE html>
     <html>
-    <head><title>Prueba de Conexión</title></head>
+    <head><title>App Restaurante</title></head>
     <body>
-        <h1>Prueba de Conexión a Supabase</h1>
-        <p>Estado del servicio:</p>
-        <p><strong>{resultado}</strong></p>
-        <p>URL del Proyecto: https://restaurante-o4bj.onrender.com</p>
+        <h1>Sistema de Pedidos del Restaurante</h1>
+        <h2>Datos del Trabajador de Prueba (ID 1)</h2>
+        
+        <p><strong>Estado del Servicio:</strong> Conexión a Base de Datos Exitosa!</p>
+        
+        <p><strong>Nombre del Trabajador:</strong> {resultado[0]}</p>
+        <p><strong>Turno Asignado:</strong> {resultado[1]}</p>
+        
+        <hr>
+        <p>¡El siguiente paso es crear la interfaz de usuario para los pedidos!</p>
     </body>
     </html>
     """
