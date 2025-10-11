@@ -27,7 +27,10 @@ def index():
         # Consulta para OBTENER los datos del trabajador con ID=1
         cursor.execute("SELECT nombre, turno FROM trabajador WHERE id_trabajador = 1")
         trabajador = cursor.fetchone() 
-        
+
+        cursor.execute("SELECT nombre, tunro FROM trabajador Where id_trabajador  = 2")
+        trabajador = cursor.fetchone() 
+
         if trabajador:
             # Asigna los valores a las variables de la plantilla:
             nombre_trabajador = trabajador[0]
