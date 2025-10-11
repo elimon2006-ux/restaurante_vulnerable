@@ -26,7 +26,7 @@ def index():
         cursor.execute("SELECT id_trabajador, nombre, turno FROM trabajador ORDER BY id_trabajador ASC")
         trabajadores = cursor.fetchall()  # <--- Recupera TODAS las filas
         
-        estado_conexion = "CONEXIÓN Y LECTURA DE DATOS EXITOSA. 🎉"
+        estado_conexion = "CONEXIÓN Y LECTURA DE DATOS EXITOSA. "
 
     except Exception as e:
         estado_conexion = f"ERROR DE CONEXIÓN CRÍTICO: {e}"
