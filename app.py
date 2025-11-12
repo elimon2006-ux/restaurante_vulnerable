@@ -66,6 +66,13 @@ def login():
                 'id_pedido': 103, # NOTA: La tabla asignacion_cocina requiere 'id_pedido' y 'id_platillo'. 
                 'id_platillo': 10 # Se usan IDs de prueba (103 y 10) para pasar la restricción de FK.
             }).execute()
+            
+            # Registrar el inicio en la tabla "Sesion_Cocinero"
+            supabase.table('Sesion_Cocinero').insert({
+                'id_cocinero': usuario_actual['id_trabajador'], 
+                'fecha_login': datetime.now().isoformat(),
+                'estado': 'Activo'
+            }).execute()
 
             return redirect(url_for('index'))
         
