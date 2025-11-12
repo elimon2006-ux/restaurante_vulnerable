@@ -1,31 +1,12 @@
-<div class="card shadow-sm mb-5">
-    <div class="card-body">
-        <p><strong>Conexión a Supabase:</strong> {{ estado }}</p>
-    </div>
-</div>
-
-<h3 class="mt-5 mb-3">Lista Completa de Trabajadores (Total: {{ trabajadores|length }})</h3>
-
-{% if trabajadores %}
-    {% for t in trabajadores %}
-        <div class="card mb-3">
-            <div class="card-body bg-light">
-                <div class="row">
-                    <div class="col-md-4">
-                        <p class="mb-0"><strong>ID:</strong> <span class="text-primary">{{ t[0] }}</span></p>
-                    </div>
-                    <div class="col-md-4">
-                        <p class="mb-0"><strong>Nombre:</strong> <span class="text-secondary">{{ t[1] }}</span></p>
-                    </div>
-                    <div class="col-md-4">
-                        <p class="mb-0"><strong>Turno:</strong> <span class="text-info">{{ t[2] }}</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
-{% else %}
-    <div class="alert alert-danger" role="alert">
-        No se encontraron trabajadores en la base de datos.
-    </div>
-{% endif %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel del Restaurante</title>
+</head>
+<body>
+    <h1>Bienvenido {{ usuario.nombre }}</h1>
+    <p>ID de trabajo: {{ usuario.id_trabajo }}</p>
+    <p><a href="/logout">Cerrar sesión</a></p>
+</body>
+</html>
