@@ -1,0 +1,30 @@
+#Dependencias de Python
+
+pycache/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+lib/
+include/
+bin/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache
+.hypothesis/
+.pytest_cache/
+
+#Archivos específicos de la aplicación web
+
+*.sqlite3
+instance/
+.webassets-cache
+
+#Archivos sensibles (¡CRUCIAL!)
+
+.env
+.flaskenv
