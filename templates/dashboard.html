@@ -1,21 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="dashboard-card">
+<h2 class="section-title">Bienvenido, {{ user.nombre }}</h2>
 
-    <h2>Bienvenido, {{ user.nombre }}</h2>
-
+<div class="card user-card">
     <p><b>Correo:</b> {{ user.correo }}</p>
     <p><b>Teléfono:</b> {{ user.telefono }}</p>
 
-    <h3><b>Dirección:</b></h3>
+    <h3 class="sub">Dirección</h3>
     <p>{{ user.calle }} #{{ user.numero }}, {{ user.colonia }}, {{ user.ciudad }}</p>
-
-
-    <div class="card">
-    <h3>Menú próximamente…</h3>
-    </div>
-
 </div>
 
 {% endblock %}

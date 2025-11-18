@@ -17,25 +17,50 @@ body {
    ============================= */
 
 .navbar {
-    background: #3b0000;                /* Rojo oscuro */
-    padding: 15px;
+    background: #240000;                /* Rojo vino oscuro */
+    padding: 18px 30px;
     display: flex;
-    justify-content: center;
-    gap: 25px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #4d0000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    transition: background 0.4s ease, padding 0.3s ease;
 }
 
-.navbar a {
-    color: #f2f2f2;
-    text-decoration: none;
+/* ----------- TÍTULO IZQUIERDA ----------- */
+.nav-title {
+    font-size: 28px;
+    color: #e8dccc;                   /* dorado suave */
     font-weight: bold;
-    font-size: 18px;
+    font-family: "Georgia";
     letter-spacing: 1px;
-    transition: 0.3s;
 }
 
-.navbar a:hover {
-    color: #e60000;                     /* Rojo más vibrante */
+/* ----------- LINKS DERECHA ----------- */
+.nav-right {
+    display: flex;
+    gap: 28px;
+}
+
+.nav-right a {
+    color: #f4e9da;
+    font-size: 18px;
+    text-decoration: none;
+    font-family: "Georgia";
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover elegante */
+.nav-right a:hover {
+    color: #ff9494;                  /* rojo elegante */
+    transform: translateY(-2px);
+}
+
+/* ----------- EFECTO SCROLL ----------- */
+.navbar.scrolled {
+    background: #1a0000;             /* más oscuro al bajar */
+    padding: 10px 30px;              /* navbar más compacto */
+    box-shadow: 0 6px 16px rgba(0,0,0,0.6);
 }
 
 /* =============================
@@ -164,37 +189,67 @@ input:focus {
     padding: 20px;
 }
 
-/* NAVBAR CON TÍTULO A LA IZQUIERDA */
-.navbar {
-    background: #330000;
-    padding: 15px 25px;
-    display: flex;
-    justify-content: space-between; /* título izquierda — links derecha */
-    align-items: center;
-    border-bottom: 3px solid #5c0a0a;
-}
+/* =============================
+   MENÚ - TARJETAS DE PLATILLOS
+   ============================= */
 
-/* Título */
-.nav-title {
-    font-size: 26px;
-    color: #e0d6c2;
-    font-weight: bold;
-    font-family: Georgia;
-}
-
-/* Links */
-.nav-right {
-    display: flex;
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 25px;
+    padding: 30px;
 }
 
-.nav-right a {
-    color: #f2e9dc;
-    font-size: 18px;
-    text-decoration: none;
-    font-family: Georgia;
+.menu-card {
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid #4a2525;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    color: #fff;
+    transition: 0.3s;
 }
 
-.nav-right a:hover {
-    color: #ffb3b3;
+.menu-card:hover {
+    transform: scale(1.03);
+    background: rgba(40, 40, 40, 0.9);
 }
+
+
+/* ---*/
+
+.flash-container {
+    margin: 20px auto;
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+}
+
+.flash {
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-family: "Georgia", serif;
+}
+
+.flash.success { 
+    background: #5a0000; 
+    color: #fff; 
+}
+
+.flash.danger { 
+    background: #800000; 
+    color: #fff; 
+}
+
+.flash {
+    padding: 12px 20px;
+    margin: 10px auto;
+    width: 90%;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+}
+.flash.success { background-color: #2a4a2a; color: #c8ffc8; }
+.flash.danger { background-color: #4a1a1a; color: #ffbaba; }

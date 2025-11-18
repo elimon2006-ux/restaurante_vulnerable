@@ -5,31 +5,42 @@
     <title>Mi Restaurante</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
 
 <!-- NAVBAR -->
 <nav class="navbar">
-
     <div class="nav-left">
-        <div class="nav-title">Mi Restaurante</div>
+        <a class="nav-title" href="/">Mi Restaurante</a>
     </div>
 
     <div class="nav-right">
         <a href="/">Inicio</a>
-        <a href="/login">Iniciar Sesión</a>
-        <a href="/register">Registrarse</a>
+        <a href="/menu">Menú</a>
+
+        {% if not session.get('user') %}
+            <a href="/login">Iniciar Sesión</a>
+            <a href="/register">Registrarse</a>
+        {% endif %}
 
         {% if session.get('user') %}
             <a href="/dashboard">Dashboard</a>
-            <a href="/logout">Salir</a>
+            <a href="/logout" class="logout">Salir</a>
         {% endif %}
     </div>
-
 </nav>
 
+<!-- FLASHES -->
+<div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
 
-<!-- CONTENIDO -->
+<!-- CONTENIDO PRINCIPAL -->
 <div class="content">
     {% block content %}{% endblock %}
 </div>

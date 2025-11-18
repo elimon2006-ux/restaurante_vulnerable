@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="titulo">Mi Pedido</h1>
+
+{% if pedido %}
+<table style="margin: 0 auto; border-collapse: collapse; width: 80%;">
+    <thead>
+        <tr style="border-bottom: 2px solid #4a2525;">
+            <th>Platillo</th>
+            <th>Precio</th>
+            <th>Cantidad</th>
+            <th>Subtotal</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in pedido %}
+        <tr style="border-bottom: 1px solid #4a2525;">
+            <td>{{ item.nombre }}</td>
+            <td>${{ item.precio }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>${{ item.precio * item.cantidad }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('modificar_pedido') }}" style="display:inline;">
+                    <input type="hidden" name="id" value="{{ item.id or 0 }}">
+                    <input type="hidden" name="accion" value="aumentar">
+                    <button type="submit" class="btn btn-outline">+</button>
+                </form>
+                <form method="POST" action="{{ url_for('modificar_pedido') }}" style="display:inline;">
+                    <input type="hidden" name="id" value="{{ item.id or 0 }}">
+                    <input type="hidden" name="accion" value="disminuir">
+                    <button type="submit" class="btn btn-outline">-</button>
+                </form>
+                <form method="POST" action="{{ url_for('modificar_pedido') }}" style="display:inline;">
+                    <input type="hidden" name="id" value="{{ item.id or 0 }}">
+                    <input type="hidden" name="accion" value="eliminar">
+                    <button type="submit" class="btn btn-outline">Eliminar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2 style="margin-top:20px;">Total: ${{ total }}</h2>
+
+<form method="POST" action="{{ url_for('confirmar_pedido') }}">
+    <button type="submit" class="btn btn-outline" style="margin-top: 20px;">Confirmar Pedido</button>
+</form>
+
+{% else %}
+<p>No hay platillos en tu pedido.</p>
+<a href="{{ url_for('menu') }}" class="btn btn-outline">Volver al Menú</a>
+{% endif %}
+
+{% endblock %}
