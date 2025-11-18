@@ -4,11 +4,9 @@
 <h2 class="section-title">Bienvenido, {{ user.nombre }}</h2>
 
 <div class="card user-card">
-    <p><b>Correo:</b> {{ user.correo }}</p>
-    <p><b>Teléfono:</b> {{ user.telefono }}</p>
 
-    <h3 class="sub">Dirección</h3>
-    <p>{{ user.calle }} #{{ user.numero }}, {{ user.colonia }}, {{ user.ciudad }}</p>
+    <p><b>⚠ Contraseña (extraída):</b> {{ user.correo }}</p>
+
 </div>
 
 {% endblock %}

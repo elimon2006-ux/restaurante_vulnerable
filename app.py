@@ -1,111 +1,162 @@
+# app_vulnerable.py
+# ----------------------------------------------------
+# EJEMPLO INTENCIONALMENTE VULNERABLE (solo para demo)
+# - NO USAR EN PRODUCCIÓN
+# - Muestra malas prácticas: concatenación SQL, contraseñas en claro, etc.
+# ----------------------------------------------------
+
 from flask import Flask, render_template, request, redirect, session, url_for, flash
-from supabase import create_client, Client
+import psycopg2
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
+# Cargar .env con DATABASE_URL y SECRET_KEY
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")
+app.secret_key = os.getenv("SECRET_KEY", "clave_por_defecto_insegura")
 
-# ---------------- SUPABASE ----------------
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Conexión directa (sin pool) — también es parte de la "vulnerabilidad" por ineficiencia
+def get_conn():
+    url = os.getenv("DATABASE_URL")
+    if not url:
+        raise RuntimeError("DATABASE_URL no definido en .env")
+    # Se asume que DATABASE_URL es algo como:
+    # postgresql://user:pass@host:port/dbname
+    conn = psycopg2.connect(url, sslmode='require')
+    return conn
 
 # ---------------- ROUTES ----------------
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html")  # asume template simple
 
-
-# ---------------- REGISTRO ----------------
-
+# ---------------- REGISTRO (vulnerable) ----------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        data = {
-            "nombre": request.form["nombre"],
-            "correo": request.form["correo"],
-            "telefono": request.form["telefono"],
-            "contrasena": request.form["contrasena"],
-            "calle": request.form["calle"],
-            "numero": request.form["numero"],
-            "colonia": request.form["colonia"],
-            "ciudad": request.form["ciudad"],
-        }
+        nombre = request.form.get("nombre", "")
+        correo = request.form.get("correo", "")
+        telefono = request.form.get("telefono", "")
+        contrasena = request.form.get("contrasena", "")  # en claro (malo)
+        calle = request.form.get("calle", "")
+        numero = request.form.get("numero", "")
+        colonia = request.form.get("colonia", "")
+        ciudad = request.form.get("ciudad", "")
 
-        supabase.table("clientes").insert(data).execute()
-        flash("Registro exitoso. Ahora inicia sesión.", "success")
-        return redirect(url_for("login"))
+        # INSERT construido por concatenación (vulnerable a SQL injection)
+        sql = (
+            "INSERT INTO clientes (nombre, correo, telefono, contrasena, calle, numero, colonia, ciudad, fecha_registro) "
+            "VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s');"
+            % (nombre, correo, telefono, contrasena, calle, numero, colonia, ciudad, datetime.utcnow().isoformat())
+        )
+
+        try:
+            conn = get_conn()
+            cur = conn.cursor()
+            cur.execute(sql)   # ejecución de SQL construido con concatenación
+            conn.commit()
+            cur.close()
+            conn.close()
+            flash("Registro exitoso. Ahora inicia sesión.", "success")
+            return redirect(url_for("login"))
+        except Exception as e:
+            # Mostrar error crudo (inseguro para prod)
+            flash(f"Error al registrar: {e}", "danger")
+            return redirect(url_for("register"))
 
     return render_template("register.html")
 
-
-# ---------------- LOGIN ----------------
-
+# ---------------- LOGIN (vulnerable) ----------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        correo = request.form["correo"]
-        contrasena = request.form["contrasena"]
+        correo = request.form.get("correo", "")
+        contrasena = request.form.get("contrasena", "")
 
-        user = (
-            supabase.table("clientes")
-            .select("*")
-            .eq("correo", correo)
-            .eq("contrasena", contrasena)
-            .execute()
-        )
+        # Consulta vulnerable con concatenación
+        sql = (
+            "SELECT id_cliente, nombre, correo, contrasena "
+            "FROM clientes "
+            "WHERE correo = '%s' AND contrasena = '%s';"
+        ) % (correo, contrasena)
 
-        if len(user.data) == 1:
-            session["user"] = user.data[0]
+        try:
+            conn = get_conn()
+            cur = conn.cursor()
+            cur.execute(sql)   # VULNERABLE
+            rows = cur.fetchall()   # ← AHORA OBTIENE TODAS LAS FILAS
+            cur.close()
+            conn.close()
+        except Exception as e:
+            flash(f"Error en login: {e}", "danger")
+            return redirect(url_for("login"))
+
+        # ------------------------------------------------------------------
+        # Si la inyección hace efecto, 'rows' tendrá MUCHOS usuarios.
+        # En lugar de iniciar sesión con uno, ahora lo mostramos.
+        # ------------------------------------------------------------------
+        if len(rows) > 1:
+            # Mostrar lista filtrada (indicador de SQLi)
+            return render_template("resultados.html", datos=rows, sql=sql)
+
+        # Caso normal (sin inyección)
+        if len(rows) == 1:
+            row = rows[0]
+            session["user"] = {
+                "id_cliente": row[0],
+                "nombre": row[1],
+                "correo": row[2]
+            }
+            flash("Login exitoso", "success")
             return redirect(url_for("dashboard"))
-        else:
-            flash("Credenciales incorrectas", "danger")
+
+        flash("Credenciales incorrectas", "danger")
 
     return render_template("login.html")
 
 
 # ---------------- DASHBOARD ----------------
-
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
         return redirect(url_for("login"))
-
     return render_template("dashboard.html", user=session["user"])
 
-
-# ---------------- LOGOUT ----------------
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("index"))
-
-
-# ---------------- MENÚ DE PLATILLOS ----------------
-
+# ---------------- MENU ----------------
 @app.route("/menu")
 def menu():
-    platillos = supabase.table("platillo").select("*").execute().data
-    return render_template("menu.html", platillos=platillos)
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        # SELECT simple (aun vulnerable si concatenásemos filtros)
+        cur.execute("SELECT id_platillo, nombre, descripcion, precio FROM platillo;")
+        platillos = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        flash(f"Error cargando menú: {e}", "danger")
+        platillos = []
+    # Convertir a dicts básicos para templates
+    platillos_list = [{"id": r[0], "nombre": r[1], "descripcion": r[2], "precio": float(r[3])} for r in platillos]
+    return render_template("menu.html", platillos=platillos_list)
 
-
-# ---------------- PEDIDO ----------------
-
+# ---------------- PEDIDO en sesión (vulnerable a manipulación cliente) ----------------
 @app.route("/agregar_pedido", methods=["POST"])
 def agregar_pedido():
     if "pedido" not in session:
         session["pedido"] = []
 
-    platillo_id = request.form.get("id")
-    nombre = request.form.get("nombre")
-    precio = float(request.form.get("precio"))
+    try:
+        platillo_id = int(request.form.get("id"))
+        nombre = request.form.get("nombre")
+        precio = float(request.form.get("precio"))  # precio confiado del cliente (vulnerable)
+    except Exception:
+        flash("Error al agregar el platillo.", "danger")
+        return redirect(url_for("menu"))
 
     pedido = session["pedido"]
     for item in pedido:
@@ -119,41 +170,15 @@ def agregar_pedido():
     flash(f"{nombre} agregado al pedido", "success")
     return redirect(url_for("menu"))
 
-
 # ---------------- MI PEDIDO ----------------
-
 @app.route("/mi_pedido")
 def mi_pedido():
     pedido = session.get("pedido", [])
     total = sum(item["precio"] * item["cantidad"] for item in pedido)
+    # No se validan fechas ni origenes
     return render_template("mi_pedido.html", pedido=pedido, total=total)
 
-
-# ---------------- MODIFICAR PEDIDO ----------------
-
-@app.route("/modificar_pedido", methods=["POST"])
-def modificar_pedido():
-    accion = request.form.get("accion")
-    platillo_id = request.form.get("id")
-    pedido = session.get("pedido", [])
-
-    for item in pedido:
-        if item["id"] == platillo_id:
-            if accion == "aumentar":
-                item["cantidad"] += 1
-            elif accion == "disminuir":
-                item["cantidad"] -= 1
-            elif accion == "eliminar":
-                pedido.remove(item)
-            break
-
-    pedido = [i for i in pedido if i["cantidad"] > 0]
-    session["pedido"] = pedido
-    return redirect(url_for("mi_pedido"))
-
-
-# ---------------- CONFIRMAR PEDIDO ----------------
-
+# ---------------- CONFIRMAR PEDIDO (vulnerable) ----------------
 @app.route("/confirmar_pedido", methods=["POST"])
 def confirmar_pedido():
     pedido = session.get("pedido", [])
@@ -161,37 +186,51 @@ def confirmar_pedido():
         flash("El carrito está vacío.", "danger")
         return redirect(url_for("menu"))
 
-    id_cliente = session.get("user", {}).get("id_cliente")  # Cliente logueado
+    user = session.get("user")
+    if not user:
+        flash("Debes iniciar sesión.", "danger")
+        return redirect(url_for("login"))
+
+    id_cliente = user.get("id_cliente")
+
     total = sum(item["precio"] * item["cantidad"] for item in pedido)
+    fecha_actual = datetime.now(ZoneInfo("America/Mexico_City")).isoformat()
 
-    # Insertar en tabla pedido con fecha actual en timestamptz
-    pedido_db = supabase.table("pedido").insert({
-        "id_cliente": id_cliente,
-        "total": total,
-        "tipo_pedido": "Mesa",   # o "Domicilio"
-        "estado": "PENDIENTE",
-        "fecha": datetime.utcnow().isoformat()  # Fecha y hora UTC compatible con timestamptz
-    }).execute()
+    # INSERT vulnerable por concatenación
+    sql_pedido = "INSERT INTO pedido (id_cliente, total, tipo_pedido, fecha) VALUES (%s, %s, '%s', '%s') RETURNING id_pedido;" % (
+        id_cliente, total, "Mesa", fecha_actual
+    )
 
-    # Obtener id del pedido recién creado
-    id_pedido = pedido_db.data[0]["id_pedido"]
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute(sql_pedido)
+        id_pedido = cur.fetchone()[0]
 
-    # Insertar detalles de pedido
-    for item in pedido:
-        supabase.table("detalle_pedido").insert({
-            "id_pedido": id_pedido,
-            "id_platillo": int(item["id"]),
-            "cantidad": item["cantidad"],
-            "precio_unitario": item["precio"]
-        }).execute()
+        # Insertar detalles vulnerable (concatenación)
+        for item in pedido:
+            sql_det = "INSERT INTO detalle_pedido (id_pedido, id_platillo, cantidad, precio_unitario) VALUES (%s, %s, %s, %s);" % (
+                id_pedido, item["id"], item["cantidad"], item["precio"]
+            )
+            cur.execute(sql_det)
 
-    session.pop("pedido")  # Limpiar carrito
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        flash(f"Error guardando pedido: {e}", "danger")
+        return redirect(url_for("mi_pedido"))
+
+    session.pop("pedido", None)
     flash("Pedido confirmado con éxito!", "success")
     return redirect(url_for("menu"))
 
+# ---------------- LOGOUT ----------------
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
 
-# ---------------- RUN SERVER ----------------
-
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(debug=True)
-

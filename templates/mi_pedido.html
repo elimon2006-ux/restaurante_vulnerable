@@ -4,13 +4,14 @@
 <h1 class="titulo">Mi Pedido</h1>
 
 {% if pedido %}
-<table style="margin: 0 auto; border-collapse: collapse; width: 80%;">
+<table style="margin: 0 auto; border-collapse: collapse; width: 90%;">
     <thead>
         <tr style="border-bottom: 2px solid #4a2525;">
             <th>Platillo</th>
             <th>Precio</th>
             <th>Cantidad</th>
             <th>Subtotal</th>
+            <th>Fecha</th>
             <th>Acciones</th>
         </tr>
     </thead>
@@ -21,19 +22,20 @@
             <td>${{ item.precio }}</td>
             <td>{{ item.cantidad }}</td>
             <td>${{ item.precio * item.cantidad }}</td>
+            <td>{{ item.fecha_local if item.fecha_local else "No asignada" }}</td>
             <td>
                 <form method="POST" action="{{ url_for('modificar_pedido') }}" style="display:inline;">
-                    <input type="hidden" name="id" value="{{ item.id or 0 }}">
+                    <input type="hidden" name="id" value="{{ item.id }}">
                     <input type="hidden" name="accion" value="aumentar">
                     <button type="submit" class="btn btn-outline">+</button>
                 </form>
                 <form method="POST" action="{{ url_for('modificar_pedido') }}" style="display:inline;">
-                    <input type="hidden" name="id" value="{{ item.id or 0 }}">
+                    <input type="hidden" name="id" value="{{ item.id }}">
                     <input type="hidden" name="accion" value="disminuir">
                     <button type="submit" class="btn btn-outline">-</button>
                 </form>
                 <form method="POST" action="{{ url_for('modificar_pedido') }}" style="display:inline;">
-                    <input type="hidden" name="id" value="{{ item.id or 0 }}">
+                    <input type="hidden" name="id" value="{{ item.id }}">
                     <input type="hidden" name="accion" value="eliminar">
                     <button type="submit" class="btn btn-outline">Eliminar</button>
                 </form>
